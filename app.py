@@ -1,5 +1,8 @@
 import streamlit as st
 import yfinance as yf
+import requests
+
+api_key = st.secrets.get("FINNHUB_API_KEY")
 
 def show_stat(label,value):
     if value:
@@ -50,4 +53,13 @@ if ticker:
         else:
             st.write("Next earnings date: Not Available")
 
+        params = {"symbol": ticker, "from": "2026-10-01", "to": "2026-10-10", "token": api_key}
+        response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
+        news = response.json()
+
+        st.subheader("Latest News")
+        for article in news[:5]:
+            st.markdown(f"**{article.get('headline')}**")
+            st.write(article.get("summary"))
+            st.markdown(f"[Read more]({article.get('url')})")
 
