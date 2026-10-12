@@ -1,7 +1,8 @@
 import streamlit as st
 import yfinance as yf
 import requests
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 
 
 api_key = st.secrets.get("FINNHUB_API_KEY")
@@ -66,6 +67,10 @@ if ticker:
         st.subheader("Latest News")
         for article in news[:5]:
             st.markdown(f"**{article.get('headline')}**")
+            published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
+            published = published.strftime("%d %B %Y, %H:%M")
+            st.write(f"{article.get('source')} · {published}")
             st.write(article.get("summary"))
             st.markdown(f"[Read more]({article.get('url')})")
 
+        
