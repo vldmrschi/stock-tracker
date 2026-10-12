@@ -1,6 +1,8 @@
 import streamlit as st
 import yfinance as yf
 import requests
+from datetime import date, timedelta
+
 
 api_key = st.secrets.get("FINNHUB_API_KEY")
 
@@ -12,6 +14,7 @@ def show_stat(label,value):
 
 
 st.title("Stock Tracker")
+st.write(date.today().strftime("%d %B %Y"))
 
 ticker = st.text_input("Enter a ticker", "AAPL")
 ticker = ticker.strip().upper()
@@ -53,7 +56,10 @@ if ticker:
         else:
             st.write("Next earnings date: Not Available")
 
-        params = {"symbol": ticker, "from": "2026-10-01", "to": "2026-10-10", "token": api_key}
+        today = date.today()
+        week_ago = today - timedelta(days=7)
+
+        params = {"symbol": ticker, "from": str(week_ago), "to": str(today), "token": api_key}
         response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
         news = response.json()
 
