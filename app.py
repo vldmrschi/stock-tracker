@@ -49,6 +49,8 @@ if ticker:
         else:
             st.write("Market Cap: Not Available")
 
+
+
         calendar = stock.calendar
         earnings_date = calendar.get("Earnings Date")
         
@@ -56,6 +58,28 @@ if ticker:
             st.write(f"Next earnings date: {earnings_date[0]}")
         else:
             st.write("Next earnings date: Not Available")
+
+        st.subheader("Latest Earnings")
+        earnings = stock.earnings_dates
+
+        if earnings is None:
+            st.info("Earnings data isn't available for this ticker. Funds and ETFs don't report earnings.")
+        else:
+            past_earnings = earnings.dropna().head(4)
+            beats = 0
+            for earnings_date, row in past_earnings.iterrows():
+                nice_date = earnings_date.strftime("%d %B %Y")
+
+                if row["Reported EPS"] > row["EPS Estimate"]:
+                    result = "Beat"
+                    beats = beats + 1
+                elif row["Reported EPS"] == row["EPS Estimate"]:
+                    result = "In line"
+                else:
+                    result = "Miss"
+
+                st.markdown(f"**{nice_date}** · Estimate {row['EPS Estimate']} · Reported {row['Reported EPS']} · **{result}**")
+            st.write(f"Beat {beats} of the last {len(past_earnings)} quarters")
 
         today = date.today()
         week_ago = today - timedelta(days=7)
@@ -65,12 +89,15 @@ if ticker:
         news = response.json()
 
         st.subheader("Latest News")
-        for article in news[:5]:
-            st.markdown(f"**{article.get('headline')}**")
-            published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
-            published = published.strftime("%d %B %Y, %H:%M")
-            st.write(f"{article.get('source')} · {published}")
-            st.write(article.get("summary"))
-            st.markdown(f"[Read more]({article.get('url')})")
+        if "error" in news:
+            st.info("News isn't available for this ticker. News is currently only supported for companies listed in North America.")
+        else:
+            for article in news[:5]:
+                st.markdown(f"**{article.get('headline')}**")
+                published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
+                published = published.strftime("%d %B %Y, %H:%M")
+                st.write(f"{article.get('source')} · {published}")
+                st.write(article.get("summary"))
+                st.markdown(f"[Read more]({article.get('url')})")
 
         
