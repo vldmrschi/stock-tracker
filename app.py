@@ -13,9 +13,23 @@ def show_stat(label,value):
     else:
         st.write(f"{label}: Not Available")
 
+def day_suffix(day):
+    if day in [11, 12, 13]:
+        return "th"
+    elif day % 10 == 1:
+        return "st"
+    elif day % 10 == 2:
+        return "nd"
+    elif day % 10 == 3:
+        return "rd"
+    else:
+        return "th"
+
+def format_date(d):
+    return f"{d.day}{day_suffix(d.day)} {d.strftime('%B %Y')}"
 
 st.title("Stock Tracker")
-st.write(date.today().strftime("%d %B %Y"))
+st.write(format_date(date.today()))
 
 ticker = st.text_input("Enter a ticker", "AAPL")
 ticker = ticker.strip().upper()
@@ -70,11 +84,11 @@ if ticker:
             days_old = (date.today()-latest_date).days
 
             if days_old > 365:
-                st.info(f"The most recent earnings data is from {latest_date.strftime("%d %B %Y")}, so it's too old to show.")
+                st.info(f"The most recent earnings data is from {format_date(latest_date)}, so it's too old to show.")
             else:
                 beats = 0
                 for earnings_date, row in past_earnings.iterrows():
-                    nice_date = earnings_date.strftime("%d %B %Y")
+                    nice_date = format_date(earnings_date)
 
                     if row["Reported EPS"] > row["EPS Estimate"]:
                         result = "Beat"
@@ -103,7 +117,20 @@ if ticker:
             for article in news[:5]:
                 st.markdown(f"**{article.get('headline')}**")
                 published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
-                published = published.strftime("%d %B %Y, %H:%M")
+                published = f"{format_date(published)}, {published.strftime('%H:%M')}"
                 st.write(f"{article.get('source')} · {published}")
                 st.write(article.get("summary"))
                 st.markdown(f"[Read more]({article.get('url')})")
+
+
+    def day_suffix(day):
+        if day in [11, 12, 13]:
+            return "th"
+        elif day % 10 == 1:
+            return "st"
+        elif day % 10 == 2:
+            return "nd"
+        elif day % 10 == 3:
+            return "rd"
+        else:
+            return "th"
