@@ -66,20 +66,26 @@ if ticker:
             st.info("Earnings data isn't available for this ticker. Funds and ETFs don't report earnings.")
         else:
             past_earnings = earnings.dropna().head(4)
-            beats = 0
-            for earnings_date, row in past_earnings.iterrows():
-                nice_date = earnings_date.strftime("%d %B %Y")
+            latest_date = past_earnings.index.date[0]
+            days_old = (date.today()-latest_date).days
 
-                if row["Reported EPS"] > row["EPS Estimate"]:
-                    result = "Beat"
-                    beats = beats + 1
-                elif row["Reported EPS"] == row["EPS Estimate"]:
-                    result = "In line"
-                else:
-                    result = "Miss"
+            if days_old > 365:
+                st.info(f"The most recent earnings data is from {latest_date.strftime("%d %B %Y")}, so it's too old to show.")
+            else:
+                beats = 0
+                for earnings_date, row in past_earnings.iterrows():
+                    nice_date = earnings_date.strftime("%d %B %Y")
 
-                st.markdown(f"**{nice_date}** · Estimate {row['EPS Estimate']} · Reported {row['Reported EPS']} · **{result}**")
-            st.write(f"Beat {beats} of the last {len(past_earnings)} quarters")
+                    if row["Reported EPS"] > row["EPS Estimate"]:
+                        result = "Beat"
+                        beats = beats + 1
+                    elif row["Reported EPS"] == row["EPS Estimate"]:
+                        result = "In line"
+                    else:
+                        result = "Miss"
+
+                    st.markdown(f"**{nice_date}** · Estimate {row['EPS Estimate']} · Reported {row['Reported EPS']} · **{result}**")
+                st.write(f"Beat {beats} of the last {len(past_earnings)} quarters")
 
         today = date.today()
         week_ago = today - timedelta(days=7)
@@ -99,5 +105,3 @@ if ticker:
                 st.write(f"{article.get('source')} · {published}")
                 st.write(article.get("summary"))
                 st.markdown(f"[Read more]({article.get('url')})")
-
-        
