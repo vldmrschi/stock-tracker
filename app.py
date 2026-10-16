@@ -9,7 +9,7 @@ api_key = st.secrets.get("FINNHUB_API_KEY")
 
 def show_stat(label,value):
     if value:
-        st.write(f"{label}: {value}")
+        st.write(f"{label}: {value:,}")
     else:
         st.write(f"{label}: Not Available")
 
@@ -49,7 +49,7 @@ if ticker:
         st.line_chart(history["Close"])
         st.write("Company Info:")
         market_cap = info.get("marketCap")
-        show_stat("P/E ratio",info.get("trailingPE"))
+        show_stat("P/E Ratio",info.get("trailingPE"))
         show_stat("52-week high", info.get("fiftyTwoWeekHigh"))
         show_stat("Dividend Yield (%)", info.get("dividendYield"))
 
@@ -63,15 +63,22 @@ if ticker:
         else:
             st.write("Market Cap: Not Available")
 
-
-
         calendar = stock.calendar
         earnings_date = calendar.get("Earnings Date")
-        
+
+
         if earnings_date:
             st.write(f"Next earnings date: {earnings_date[0]}")
         else:
             st.write("Next earnings date: Not Available")
+
+        st.subheader("DCF Inputs")
+
+        show_stat("Free Cash Flow (FCF)", info.get("freeCashflow"))
+        show_stat("Shares outstanding", info.get("sharesOutstanding"))
+        show_stat("Total Cash", info.get("totalCash"))
+        show_stat("Total Debt", info.get("totalDebt"))
+
 
         st.subheader("Latest Earnings")
         earnings = stock.earnings_dates
@@ -121,16 +128,3 @@ if ticker:
                 st.write(f"{article.get('source')} · {published}")
                 st.write(article.get("summary"))
                 st.markdown(f"[Read more]({article.get('url')})")
-
-
-    def day_suffix(day):
-        if day in [11, 12, 13]:
-            return "th"
-        elif day % 10 == 1:
-            return "st"
-        elif day % 10 == 2:
-            return "nd"
-        elif day % 10 == 3:
-            return "rd"
-        else:
-            return "th"
