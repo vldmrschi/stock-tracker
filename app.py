@@ -74,11 +74,25 @@ if ticker:
 
         st.subheader("DCF Inputs")
 
-        show_stat("Free Cash Flow (FCF)", info.get("freeCashflow"))
-        show_stat("Shares outstanding", info.get("sharesOutstanding"))
-        show_stat("Total Cash", info.get("totalCash"))
-        show_stat("Total Debt", info.get("totalDebt"))
+        fcf = info.get("freeCashflow")
+        shares_outstanding = info.get("sharesOutstanding")
+        total_cash = info.get("totalCash")
+        total_debt = info.get("totalDebt")
 
+
+        show_stat("Free Cash Flow (FCF)", fcf)
+        show_stat("Shares outstanding", shares_outstanding)
+        show_stat("Total Cash", total_cash)
+        show_stat("Total Debt", total_debt)
+        if fcf:
+            growth = st.slider("FCF growth rate (%)", 0, 20, 5)
+            st.write(f"Growth rate: {growth}%")
+            wacc = st.slider("WACC (%)", 5, 15, 9)
+            st.write(f"WACC: {wacc}%")
+            terminal_growth = st.slider("Terminal growth rate (%)", 0, 5, 2)
+            st.write(f"Terminal growth rate: {terminal_growth}%")
+        else:
+            st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
 
         st.subheader("Latest Earnings")
         earnings = stock.earnings_dates
