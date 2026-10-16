@@ -97,6 +97,8 @@ if ticker:
         st.subheader("Latest News")
         if "error" in news:
             st.info("News isn't available for this ticker. News is currently only supported for companies listed in North America.")
+        elif len(news) == 0:
+            st.info("No news for this ticker in the last 7 days.")
         else:
             for article in news[:5]:
                 st.markdown(f"**{article.get('headline')}**")
