@@ -91,6 +91,12 @@ if ticker:
             st.write(f"WACC: {wacc}%")
             terminal_growth = st.slider("Terminal growth rate (%)", 0, 5, 2)
             st.write(f"Terminal growth rate: {terminal_growth}%")
+            growth_rate = growth / 100
+            projected_fcf = fcf
+            for year in range(1, 6):
+                projected_fcf = projected_fcf * (1 + growth_rate)
+                st.write(f"Year {year}: {projected_fcf:,.0f}")
+
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
 
