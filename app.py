@@ -110,6 +110,17 @@ if ticker:
             st.write(f"PV of terminal value: {pv_terminal:,.0f}")
             enterprise_value = total_pv + pv_terminal
             st.write(f"Enterprise value: {enterprise_value:,.0f}")
+            equity_value = enterprise_value + total_cash - total_debt
+            st.write(f"Equity Value: {equity_value:,.0f} {currency}")
+            value_per_share = equity_value / shares_outstanding
+            st.write(f"Value per share: {value_per_share:.2f} {currency}")
+            st.write(f"Current price: {latest_price:.2f} {currency}")
+
+            upside = (value_per_share - latest_price) / latest_price * 100
+            if upside > 0:
+                st.success(f"Upside: {upside:.1f}%. The stock looks undervalued.")
+            else:
+                st.error(f"Downside: {upside:.1f}%. The stock looks overvalued.")
 
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
