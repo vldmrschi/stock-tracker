@@ -93,9 +93,23 @@ if ticker:
             st.write(f"Terminal growth rate: {terminal_growth}%")
             growth_rate = growth / 100
             projected_fcf = fcf
+            wacc_rate = wacc / 100
+            total_pv = 0
+
             for year in range(1, 6):
                 projected_fcf = projected_fcf * (1 + growth_rate)
-                st.write(f"Year {year}: {projected_fcf:,.0f}")
+                pv = projected_fcf / (1 + wacc_rate) ** year
+                total_pv = total_pv + pv
+                st.write(f"Year {year}: FCF {projected_fcf:,.0f} · PV {pv:,.0f}")
+            st.write(f"Sum of PVs: {total_pv:,.0f}")
+
+            terminal_rate = terminal_growth / 100
+            terminal_value = projected_fcf * (1 + terminal_rate) / (wacc_rate - terminal_rate)
+            st.write(f"Terminal value: {terminal_value:,.0f}")
+            pv_terminal = terminal_value / (1 + wacc_rate) ** 5
+            st.write(f"PV of terminal value: {pv_terminal:,.0f}")
+            enterprise_value = total_pv + pv_terminal
+            st.write(f"Enterprise value: {enterprise_value:,.0f}")
 
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
