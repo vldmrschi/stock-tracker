@@ -72,13 +72,16 @@ if ticker:
         else:
             st.write("Next earnings date: Not Available")
 
+
         st.subheader("DCF Inputs")
 
-        fcf = info.get("freeCashflow")
+        if "Free Cash Flow" in stock.cashflow.index:
+            fcf = stock.cashflow.loc["Free Cash Flow"].iloc[0]
+        else:
+            fcf = None
         shares_outstanding = info.get("sharesOutstanding")
         total_cash = info.get("totalCash")
         total_debt = info.get("totalDebt")
-
 
         show_stat("Free Cash Flow (FCF)", fcf)
         show_stat("Shares outstanding", shares_outstanding)
