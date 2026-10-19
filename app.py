@@ -111,25 +111,28 @@ if ticker:
             st.write(f"Sum of PVs: {total_pv:,.0f}")
 
             terminal_rate = terminal_growth / 100
-            terminal_value = projected_fcf * (1 + terminal_rate) / (wacc_rate - terminal_rate)
-            st.write(f"Terminal value: {terminal_value:,.0f}")
-            pv_terminal = terminal_value / (1 + wacc_rate) ** 5
-            st.write(f"PV of terminal value: {pv_terminal:,.0f}")
-            enterprise_value = total_pv + pv_terminal
-            st.write(f"Enterprise value: {enterprise_value:,.0f}")
-            equity_value = enterprise_value + total_cash - total_debt
-            st.write(f"Equity Value: {equity_value:,.0f} {currency}")
-            if shares_outstanding:
-                value_per_share = equity_value / shares_outstanding
-                st.write(f"Value per share: {value_per_share:.2f} {currency}")
-                st.write(f"Current price: {latest_price:.2f} {currency}")
-                upside = (value_per_share - latest_price) / latest_price * 100
-                if upside > 0:
-                    st.success(f"Upside: {upside:.1f}%. The stock looks undervalued.")
+            if wacc > terminal_growth:
+                terminal_value = projected_fcf * (1 + terminal_rate) / (wacc_rate - terminal_rate)
+                st.write(f"Terminal value: {terminal_value:,.0f}")
+                pv_terminal = terminal_value / (1 + wacc_rate) ** 5
+                st.write(f"PV of terminal value: {pv_terminal:,.0f}")
+                enterprise_value = total_pv + pv_terminal
+                st.write(f"Enterprise value: {enterprise_value:,.0f}")
+                equity_value = enterprise_value + total_cash - total_debt
+                st.write(f"Equity Value: {equity_value:,.0f} {currency}")
+                if shares_outstanding:
+                    value_per_share = equity_value / shares_outstanding
+                    st.write(f"Value per share: {value_per_share:.2f} {currency}")
+                    st.write(f"Current price: {latest_price:.2f} {currency}")
+                    upside = (value_per_share - latest_price) / latest_price * 100
+                    if upside > 0:
+                        st.success(f"Upside: {upside:.1f}%. The stock looks undervalued.")
+                    else:
+                        st.error(f"Downside: {upside:.1f}%. The stock looks overvalued.")
                 else:
-                    st.error(f"Downside: {upside:.1f}%. The stock looks overvalued.")
+                    st.info("Value per share can't be calculated. Shares outstanding is missing.")
             else:
-                st.info("Value per share can't be calculated. Shares outstanding is missing.")
+                st.error("Terminal growth must be lower than WACC.")
 
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
