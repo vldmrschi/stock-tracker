@@ -42,6 +42,7 @@ if ticker:
         st.error("Ticker not found.")
     else:
         info = stock.info
+        industry = info.get("industry")
         currency = info.get("currency")
         st.subheader(f"{ticker} ({info.get('longName')})")
         latest_price = history["Close"].iloc[-1]
@@ -73,6 +74,9 @@ if ticker:
             st.write("Next earnings date: Not Available")
 
 
+
+
+
         st.subheader("DCF Inputs")
 
         if "Free Cash Flow" in stock.cashflow.index:
@@ -91,7 +95,11 @@ if ticker:
         show_stat("Shares outstanding", shares_outstanding)
         show_stat("Total Cash", total_cash)
         show_stat("Total Debt", total_debt)
-        if fcf and fcf > 0:
+
+        if industry and "Banks" in industry:
+            st.info("FCF isn't meaningful for banks, so a DCF would be misleading. Banks are usually valued on P/B (price-to-book) or with a dividend discount model.")
+
+        elif fcf and fcf > 0:
             growth = st.slider("FCF growth rate (%)", 0, 20, 5)
             st.write(f"Growth rate: {growth}%")
             wacc = st.slider("WACC (%)", 5, 15, 9)
@@ -142,6 +150,10 @@ if ticker:
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
 
+
+
+
+
         st.subheader("Latest Earnings")
         earnings = stock.earnings_dates
 
@@ -170,12 +182,18 @@ if ticker:
                     st.markdown(f"**{nice_date}** · Estimate {row['EPS Estimate']} · Reported {row['Reported EPS']} · **{result}**")
                 st.write(f"Beat {beats} of the last {len(past_earnings)} quarters")
 
+
+
         today = date.today()
         week_ago = today - timedelta(days=7)
 
         params = {"symbol": ticker, "from": str(week_ago), "to": str(today), "token": api_key}
         response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
         news = response.json()
+
+
+
+
 
         st.subheader("Latest News")
         if "error" in news:
