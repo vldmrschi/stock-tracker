@@ -83,7 +83,7 @@ if ticker:
         st.subheader("DCF Inputs")
 
         if "Free Cash Flow" in stock.cashflow.index:
-            fcf = stock.cashflow.loc["Free Cash Flow"].iloc[0]
+            fcf = int(stock.cashflow.loc["Free Cash Flow"].iloc[0])
         else:
             fcf = None
         shares_outstanding = info.get("sharesOutstanding")
