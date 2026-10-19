@@ -50,8 +50,11 @@ if ticker:
         st.line_chart(history["Close"])
         st.write("Company Info:")
         market_cap = info.get("marketCap")
-        show_stat("P/E Ratio",info.get("trailingPE"))
-        show_stat("52-week high", info.get("fiftyTwoWeekHigh"))
+        pe = info.get("trailingPE")
+        if pe:
+            pe = round(pe, 2)
+        show_stat("P/E Ratio", pe)
+        show_stat("52-week high", info.get("fiftyTwoWeekHigh"))        
         show_stat("Dividend Yield (%)", info.get("dividendYield"))
 
         if currency == "GBp":
