@@ -119,9 +119,11 @@ if ticker:
                 enterprise_value = total_pv + pv_terminal
                 st.write(f"Enterprise value: {enterprise_value:,.0f}")
                 equity_value = enterprise_value + total_cash - total_debt
-                st.write(f"Equity Value: {equity_value:,.0f} {currency}")
+                st.write(f"Equity Value: {equity_value:,.0f} {cap_currency}")
                 if shares_outstanding:
                     value_per_share = equity_value / shares_outstanding
+                    if currency == "GBp":
+                        value_per_share = value_per_share * 100
                     st.write(f"Value per share: {value_per_share:.2f} {currency}")
                     st.write(f"Current price: {latest_price:.2f} {currency}")
                     upside = (value_per_share - latest_price) / latest_price * 100
