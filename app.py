@@ -107,17 +107,17 @@ if ticker:
                 projected_fcf = projected_fcf * (1 + growth_rate)
                 pv = projected_fcf / (1 + wacc_rate) ** year
                 total_pv = total_pv + pv
-                st.write(f"Year {year}: FCF {projected_fcf:,.0f} · PV {pv:,.0f}")
-            st.write(f"Sum of PVs: {total_pv:,.0f}")
+                st.write(f"Year {year}: FCF {projected_fcf:,.0f} {cap_currency} · PV {pv:,.0f} {cap_currency}")
+            st.write(f"Sum of PVs: {total_pv:,.0f} {cap_currency}")
 
             terminal_rate = terminal_growth / 100
             if wacc > terminal_growth:
                 terminal_value = projected_fcf * (1 + terminal_rate) / (wacc_rate - terminal_rate)
-                st.write(f"Terminal value: {terminal_value:,.0f}")
+                st.write(f"Terminal value: {terminal_value:,.0f} {cap_currency}")
                 pv_terminal = terminal_value / (1 + wacc_rate) ** 5
-                st.write(f"PV of terminal value: {pv_terminal:,.0f}")
+                st.write(f"PV of terminal value: {pv_terminal:,.0f} {cap_currency}")
                 enterprise_value = total_pv + pv_terminal
-                st.write(f"Enterprise value: {enterprise_value:,.0f}")
+                st.write(f"Enterprise value: {enterprise_value:,.0f} {cap_currency}")
                 equity_value = enterprise_value + total_cash - total_debt
                 st.write(f"Equity Value: {equity_value:,.0f} {cap_currency}")
                 if shares_outstanding:
