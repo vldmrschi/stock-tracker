@@ -91,7 +91,7 @@ if ticker:
         show_stat("Shares outstanding", shares_outstanding)
         show_stat("Total Cash", total_cash)
         show_stat("Total Debt", total_debt)
-        if fcf:
+        if fcf and fcf > 0:
             growth = st.slider("FCF growth rate (%)", 0, 20, 5)
             st.write(f"Growth rate: {growth}%")
             wacc = st.slider("WACC (%)", 5, 15, 9)
@@ -133,6 +133,9 @@ if ticker:
                     st.info("Value per share can't be calculated. Shares outstanding is missing.")
             else:
                 st.error("Terminal growth must be lower than WACC.")
+
+        elif fcf:
+            st.warning("FCF is negative, so a DCF isn't meaningful for cash-burning companies. These are usually valued with revenue multiples instead.") 
 
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
