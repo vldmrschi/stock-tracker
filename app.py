@@ -104,12 +104,12 @@ if ticker:
             st.info("FCF isn't meaningful for banks, so a DCF would be misleading. Banks are usually valued on P/B (price-to-book) or with a dividend discount model.")
 
         elif fcf and fcf > 0:
-            growth = st.slider("FCF growth rate (%)", 0, 20, 5)
+            growth = st.slider("FCF Growth rate (%)", 0, 20, 5)
             st.write(f"Growth rate: {growth}%")
             wacc = st.slider("WACC (%)", 5, 15, 9)
             st.write(f"WACC: {wacc}%")
-            terminal_growth = st.slider("Terminal growth rate (%)", 0, 5, 2)
-            st.write(f"Terminal growth rate: {terminal_growth}%")
+            terminal_growth = st.slider("Terminal Growth (TG) rate (%)", 0, 5, 2)
+            st.write(f"Terminal Growth (TG) rate: {terminal_growth}%")
             growth_rate = growth / 100
             projected_fcf = fcf
             wacc_rate = wacc / 100
@@ -172,8 +172,21 @@ if ticker:
                             row.append(cell)
                         table.append(row)
 
-                    sensitivity = pd.DataFrame(table, index=wacc_values, columns=tg_values)
-                    st.dataframe(sensitivity.round(2))
+                    row_labels = []
+                    for w in wacc_values:
+                        row_labels.append(f"WACC {w}%")
+
+                    col_labels = []
+                    for t in tg_values:
+                        col_labels.append(f"TG {t}%")
+
+
+                    sensitivity = pd.DataFrame(table, index=row_labels, columns=col_labels)
+                    centre = ([row_labels[2]], [col_labels[2]])
+                    styled = sensitivity.style.format("{:.2f}", na_rep="n/a").set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
+                    st.dataframe(styled)
+                
+
 
 
 
