@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import requests
+import pandas as pd
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 
@@ -142,6 +143,41 @@ if ticker:
                         st.success(f"Upside: {upside:.1f}%. The stock looks undervalued.")
                     else:
                         st.error(f"Downside: {upside:.1f}%. The stock looks overvalued.")
+                    
+                    wacc_values = [wacc - 2, wacc - 1, wacc, wacc + 1, wacc + 2]
+                    tg_values = [terminal_growth - 1, terminal_growth - 0.5, terminal_growth, terminal_growth + 0.5, terminal_growth + 1]
+
+                    def dcf_value(wacc_rate, terminal_rate):
+                        if wacc_rate <= terminal_rate:
+                            return None
+                        projected_fcf = fcf
+                        total_pv = 0
+                        for year in range(1, 6):
+                            projected_fcf = projected_fcf * (1 + growth_rate)
+                            pv = projected_fcf / (1 + wacc_rate) ** year
+                            total_pv = total_pv + pv
+                        terminal_value = projected_fcf * (1 + terminal_rate) / (wacc_rate - terminal_rate)
+                        pv_terminal = terminal_value / (1 + wacc_rate) ** 5
+                        enterprise_value = total_pv + pv_terminal
+                        equity_value = enterprise_value + total_cash - total_debt
+                        value_per_share = equity_value / shares_outstanding
+                        if currency == "GBp":
+                            value_per_share = value_per_share * 100
+                        return value_per_share
+                    table = []
+                    for w in wacc_values:
+                        row = []
+                        for t in tg_values:
+                            cell = dcf_value(w / 100, t / 100)
+                            row.append(cell)
+                        table.append(row)
+
+                    sensitivity = pd.DataFrame(table, index=wacc_values, columns=tg_values)
+                    st.dataframe(sensitivity.round(2))
+
+
+
+
                 else:
                     st.info("Value per share can't be calculated. Shares outstanding is missing.")
             else:
