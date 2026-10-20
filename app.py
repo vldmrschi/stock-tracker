@@ -164,6 +164,10 @@ if ticker:
                         if currency == "GBp":
                             value_per_share = value_per_share * 100
                         return value_per_share
+                    
+                    
+                    st.subheader("Sensitivity Analysis Table")
+
                     table = []
                     for w in wacc_values:
                         row = []
@@ -179,7 +183,6 @@ if ticker:
                     col_labels = []
                     for t in tg_values:
                         col_labels.append(f"TG {t}%")
-
 
                     sensitivity = pd.DataFrame(table, index=row_labels, columns=col_labels)
                     centre = ([row_labels[2]], [col_labels[2]])
