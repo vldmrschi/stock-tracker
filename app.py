@@ -213,11 +213,22 @@ if ticker:
             p = p.strip().upper()
             if p:
                 clean_peers.append(p)
-        st.write(clean_peers)
+        comps_table = []
+        for peer in clean_peers:
+            peer_stock = yf.Ticker(peer)
+            peer_info = peer_stock.info
+            row = [peer_info.get("trailingPE"), peer_info.get("enterpriseToEbitda"), peer_info.get("enterpriseToRevenue")]
+            comps_table.append(row)
+
+        row_ticker = [info.get("trailingPE"), info.get("enterpriseToEbitda"), info.get("enterpriseToRevenue")]
+        comps_table.append(row_ticker)
+        
+        comps = pd.DataFrame(comps_table, index=clean_peers + [ticker], columns=["P/E", "EV/EBITDA", "EV/Revenue"])
+        highlight = ([ticker], comps.columns)
+        styled = comps.style.format("{:.2f}", na_rep="n/a").set_properties(subset=highlight, **{"background-color": "#1F3864", "color": "white"})
+        st.dataframe(styled)
 
 
-
-        st.subheader("Latest Earnings")
         earnings = stock.earnings_dates
 
         if earnings is None:
