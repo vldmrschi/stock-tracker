@@ -25,9 +25,27 @@ def day_suffix(day):
         return "rd"
     else:
         return "th"
-
+    
 def format_date(d):
     return f"{d.day}{day_suffix(d.day)} {d.strftime('%B %Y')}"
+
+def finnhub_multiples(symbol):
+    params = {"symbol": symbol, "metric": "all", "token": api_key}
+    response = requests.get("https://finnhub.io/api/v1/stock/metric", params=params)
+    m = response.json().get("metric", {})
+    return [m.get("peTTM"), m.get("evEbitdaTTM"), m.get("evRevenueTTM")]
+
+def get_multiples(symbol):
+    y_info = yf.Ticker(symbol).info
+    yahoo = [y_info.get("trailingPE"), y_info.get("enterpriseToEbitda"), y_info.get("enterpriseToRevenue")]
+    if yahoo != [None, None, None]:
+        return yahoo
+    return finnhub_multiples(symbol)
+
+
+
+
+
 
 st.title("Stock Tracker")
 st.write(format_date(date.today()))
@@ -76,7 +94,6 @@ if ticker:
             st.write(f"Next earnings date: {earnings_date[0]}")
         else:
             st.write("Next earnings date: Not Available")
-
 
 
 
@@ -215,12 +232,10 @@ if ticker:
                 clean_peers.append(p)
         comps_table = []
         for peer in clean_peers:
-            peer_stock = yf.Ticker(peer)
-            peer_info = peer_stock.info
-            row = [peer_info.get("trailingPE"), peer_info.get("enterpriseToEbitda"), peer_info.get("enterpriseToRevenue")]
+            row = get_multiples(peer)
             comps_table.append(row)
 
-        row_ticker = [info.get("trailingPE"), info.get("enterpriseToEbitda"), info.get("enterpriseToRevenue")]
+        row_ticker = get_multiples(ticker)
         comps_table.append(row_ticker)
         
         comps = pd.DataFrame(comps_table, index=clean_peers + [ticker], columns=["P/E", "EV/EBITDA", "EV/Revenue"])
