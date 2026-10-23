@@ -1,3 +1,4 @@
+from altair import param
 import streamlit as st
 import yfinance as yf
 import requests
@@ -50,11 +51,14 @@ def finnhub_info(symbol):
     if market_cap:
         market_cap = int(market_cap * 1_000_000)
 
+    shares = profile.get("shareOutstanding")
+    if shares:
+        shares = int(shares * 1_000_000)
+
     metric_params = {"symbol": symbol, "metric": "all", "token": api_key}
     m = requests.get("https://finnhub.io/api/v1/stock/metric", params=metric_params).json().get("metric", {})
 
-    return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual")}
-
+    return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "sharesOutstanding": shares, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual")}
 
 
 
@@ -262,6 +266,8 @@ if ticker:
         styled = comps.style.format("{:.2f}", na_rep="n/a").set_properties(subset=highlight, **{"background-color": "#1F3864", "color": "white"})
         st.dataframe(styled)
 
+
+        st.subheader("Latest Earnings")
 
         earnings = stock.earnings_dates
 
