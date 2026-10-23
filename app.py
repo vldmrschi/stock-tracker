@@ -42,12 +42,28 @@ def get_multiples(symbol):
         return yahoo
     return finnhub_multiples(symbol)
 
+def finnhub_info(symbol):
+    params = {"symbol": symbol, "token": api_key}
+    profile = requests.get("https://finnhub.io/api/v1/stock/profile2", params=params).json()
+
+    market_cap = profile.get("marketCapitalization")
+    if market_cap:
+        market_cap = int(market_cap * 1_000_000)
+
+    metric_params = {"symbol": symbol, "metric": "all", "token": api_key}
+    m = requests.get("https://finnhub.io/api/v1/stock/metric", params=metric_params).json().get("metric", {})
+
+    return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual")}
+
 
 
 
 
 
 st.title("Stock Tracker")
+
+
+
 st.write(format_date(date.today()))
 
 ticker = st.text_input("Enter a ticker", "AAPL")
@@ -61,6 +77,9 @@ if ticker:
         st.error("Ticker not found.")
     else:
         info = stock.info
+        if not info.get("currency"):
+            info = finnhub_info(ticker)
+            st.warning("Yahoo Finance isn't responding, so this data comes from Finnhub (US stocks only).")
         industry = info.get("industry")
         currency = info.get("currency")
         st.subheader(f"{ticker} ({info.get('longName')})")
@@ -279,7 +298,6 @@ if ticker:
         params = {"symbol": ticker, "from": str(week_ago), "to": str(today), "token": api_key}
         response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
         news = response.json()
-
 
 
 
