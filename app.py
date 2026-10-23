@@ -190,7 +190,7 @@ if ticker:
                     st.dataframe(styled)
                 
 
-
+                
 
 
 
@@ -206,6 +206,14 @@ if ticker:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
 
 
+        st.subheader("Comparable Companies")
+        peers= st.text_input("Enter peer tickers, separated by commas", "MSFT, GOOGL, META")
+        clean_peers = []
+        for p in peers.split(","):
+            p = p.strip().upper()
+            if p:
+                clean_peers.append(p)
+        st.write(clean_peers)
 
 
 
