@@ -127,10 +127,14 @@ if ticker:
         shares_outstanding = info.get("sharesOutstanding")
         total_cash = info.get("totalCash")
         total_debt = info.get("totalDebt")
-        if total_cash is None:
+        if total_cash is None and total_debt is None:
+            total_cash = 0
+            total_debt = 0
+            st.warning("Total debt and total cash aren't available, so they are treated as zero. The DCF may be less accurate.")
+        elif total_cash is None:
             total_cash = 0
             st.warning("Total cash isn't available, so it's treated as zero. The DCF may be less accurate.")
-        if total_debt is None:
+        elif total_debt is None:
             total_debt = 0
             st.warning("Total debt isn't available, so it's treated as zero. The DCF may be less accurate.")
 
