@@ -65,9 +65,6 @@ def finnhub_info(symbol):
 
 
 st.title("Stock Tracker")
-
-
-
 st.write(format_date(date.today()))
 
 ticker = st.text_input("Enter a ticker", "AAPL")
@@ -132,8 +129,10 @@ if ticker:
         total_debt = info.get("totalDebt")
         if total_cash is None:
             total_cash = 0
+            st.warning("Total cash isn't available, so it's treated as zero. The DCF may be less accurate.")
         if total_debt is None:
             total_debt = 0
+            st.warning("Total debt isn't available, so it's treated as zero. The DCF may be less accurate.")
 
         show_stat("Free Cash Flow (FCF)", fcf)
         show_stat("Shares outstanding", shares_outstanding)
