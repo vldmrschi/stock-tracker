@@ -58,10 +58,8 @@ def finnhub_info(symbol):
 
     metric_params = {"symbol": symbol, "metric": "all", "token": api_key}
     m = requests.get("https://finnhub.io/api/v1/stock/metric", params=metric_params).json().get("metric", {})
-
-    return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "sharesOutstanding": shares, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual")}
-
-
+    
+    return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "sharesOutstanding": shares, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual"), "trailingEps": m.get("epsTTM")}
 
 
 
@@ -232,11 +230,6 @@ if ticker:
                     centre = ([row_labels[2]], [col_labels[2]])
                     styled = sensitivity.style.format("{:.2f}", na_rep="n/a").set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
                     st.dataframe(styled)
-                
-
-                
-
-
 
                 else:
                     st.info("Value per share can't be calculated. Shares outstanding is missing.")
@@ -248,6 +241,8 @@ if ticker:
 
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
+
+
 
 
         st.subheader("Comparable Companies")
@@ -274,6 +269,28 @@ if ticker:
         highlight = ([ticker], comps.columns)
         styled = comps.style.format("{:.2f}", na_rep="n/a").set_properties(subset=highlight, **{"background-color": "#1F3864", "color": "white"})
         st.dataframe(styled)
+
+        median_pe = median_row[0]
+        eps = info.get("trailingEps")
+        implied_price = median_pe * eps
+
+        if eps is None:
+            st.info("There is no EPS data, the calculation cannot happen.")
+        elif eps <= 0:
+            st.info("This is a loss-making company, so a P/E-based value isn't meaningful.")
+        else:
+            implied_price = median_pe * eps
+            if currency == "GBp":
+                implied_price = implied_price * 100
+            st.write(f"Implied price: {implied_price:.2f} {currency}")
+            comps_upside = (implied_price - latest_price) / latest_price * 100
+            if comps_upside > 0:
+                st.success(f"Upside: {comps_upside:.1f}%. Based on peer P/E.")
+            else:
+                st.error(f"Downside: {comps_upside:.1f}%. Based on peer P/E.")
+
+
+
 
 
         st.subheader("Latest Earnings")
