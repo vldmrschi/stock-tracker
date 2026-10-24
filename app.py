@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 api_key = st.secrets.get("FINNHUB_API_KEY")
 
+
 def show_stat(label,value):
     if value:
         st.write(f"{label}: {value:,}")
@@ -84,7 +85,7 @@ if ticker:
         industry = info.get("industry")
         currency = info.get("currency")
         st.subheader(f"{ticker} ({info.get('longName')})")
-        latest_price = history["Close"].iloc[-1]
+        latest_price = history["Close"].dropna().iloc[-1]
         st.write(f"Latest price: {latest_price:.2f} {currency}")
         st.line_chart(history["Close"])
         st.write("Company Info:")
