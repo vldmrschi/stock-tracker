@@ -272,7 +272,6 @@ if ticker:
 
         median_pe = median_row[0]
         eps = info.get("trailingEps")
-        implied_price = median_pe * eps
 
         if eps is None:
             st.info("There is no EPS data, the calculation cannot happen.")
