@@ -261,10 +261,15 @@ if ticker:
             row = get_multiples(peer)
             comps_table.append(row)
 
+        peers_df = pd.DataFrame(comps_table, columns=["P/E", "EV/EBITDA", "EV/Revenue"])
+        median_row = peers_df.median().tolist()
+        comps_table.append(median_row)
+
+
         row_ticker = get_multiples(ticker)
         comps_table.append(row_ticker)
-        
-        comps = pd.DataFrame(comps_table, index=clean_peers + [ticker], columns=["P/E", "EV/EBITDA", "EV/Revenue"])
+
+        comps = pd.DataFrame(comps_table, index=clean_peers + ["Peer Median", ticker], columns=["P/E", "EV/EBITDA", "EV/Revenue"])
         highlight = ([ticker], comps.columns)
         styled = comps.style.format("{:.2f}", na_rep="n/a").set_properties(subset=highlight, **{"background-color": "#1F3864", "color": "white"})
         st.dataframe(styled)
