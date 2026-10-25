@@ -140,7 +140,7 @@ if ticker:
             total_cash = 0
             total_debt = 0
             if used_finnhub:
-                st.warning("Total Cash and Debt aren't available on Finnhub, so they are treated as zero. The DCF may be less accurate.")
+                st.warning("Total Cash and Total Debt aren't available on Finnhub, so they are treated as zero. The DCF may be less accurate.")
             else:
                 st.warning("Total cash and Total Debt aren't available, so they are treated as zero. The DCF may be less accurate.")
         elif total_cash is None:
