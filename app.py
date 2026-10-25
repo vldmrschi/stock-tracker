@@ -351,7 +351,11 @@ if ticker:
         today = date.today()
         week_ago = today - timedelta(days=7)
 
-        params = {"symbol": ticker, "from": str(week_ago), "to": str(today), "token": api_key}
+        from_date = st.date_input("News from", week_ago)
+        to_date = st.date_input("News until", today)
+
+
+        params = {"symbol": ticker, "from": str(from_date), "to": str(to_date), "token": api_key}
         response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
         news = response.json()
 
@@ -362,7 +366,7 @@ if ticker:
         if "error" in news:
             st.info("News isn't available for this ticker. News is currently only supported for companies listed in North America.")
         elif len(news) == 0:
-            st.info("No news for this ticker in the last 7 days.")
+            st.info(f"No news for this ticker between {format_date(from_date)} and {format_date(to_date)}")
         else:
             for article in news[:5]:
                 st.markdown(f"**{article.get('headline')}**")
