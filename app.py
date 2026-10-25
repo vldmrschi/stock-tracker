@@ -71,7 +71,12 @@ ticker = ticker.strip().upper()
 
 if ticker:
     stock = yf.Ticker(ticker)
-    history = stock.history(period="6mo")
+    
+    ch_period = st.selectbox("Pick a chart period", ["1mo", "3mo", "6mo", "1y", "5y"], index=2)
+    
+    history = stock.history(period=ch_period)
+
+    
 
     if history.empty:
         st.error("Ticker not found.")
@@ -245,7 +250,7 @@ if ticker:
 
 
 
-        st.subheader("Comparable Companies")
+        st.subheader("Comparable Companies Table")
         peers= st.text_input("Enter peer tickers, separated by commas", "MSFT, GOOGL, META")
         clean_peers = []
         for p in peers.split(","):
