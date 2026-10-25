@@ -62,7 +62,6 @@ def finnhub_info(symbol):
     return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "sharesOutstanding": shares, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual"), "trailingEps": m.get("epsTTM")}
 
 
-
 st.title("Stock Tracker")
 st.write(format_date(date.today()))
 
@@ -95,6 +94,15 @@ if ticker:
         currency = info.get("currency")
         st.subheader(f"{ticker} ({info.get('longName')})")
         latest_price = history["Close"].dropna().iloc[-1]
+
+        def cell_color(value):
+            if value is None:
+                return ""
+            if value > latest_price:
+                return "background-color: #1E5631; color: white"
+            else:
+                return "background-color: #8B1A1A; color: white"
+
         st.write(f"Latest price: {latest_price:.2f} {currency}")
         st.line_chart(history["Close"])
         st.write("Company Info:")
@@ -245,7 +253,7 @@ if ticker:
 
                     sensitivity = pd.DataFrame(table, index=row_labels, columns=col_labels)
                     centre = ([row_labels[2]], [col_labels[2]])
-                    styled = sensitivity.style.format("{:.2f}", na_rep="n/a").set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
+                    styled = sensitivity.style.format("{:.2f}", na_rep="n/a").map(cell_color).set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
                     st.dataframe(styled)
 
                 else:
@@ -363,3 +371,7 @@ if ticker:
                 st.write(f"{article.get('source')} · {published}")
                 st.write(article.get("summary"))
                 st.markdown(f"[Read more]({article.get('url')})")
+
+
+
+
