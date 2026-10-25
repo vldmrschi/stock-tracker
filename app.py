@@ -71,10 +71,11 @@ ticker = ticker.strip().upper()
 
 if ticker:
     stock = yf.Ticker(ticker)
+
+    periods = {"1 month": "1mo", "3 months": "3mo", "6 months": "6mo", "1 year": "1y", "5 years": "5y"}
+    ch_period = st.selectbox("Pick a chart period", periods, index=2)
     
-    ch_period = st.selectbox("Pick a chart period", ["1mo", "3mo", "6mo", "1y", "5y"], index=2)
-    
-    history = stock.history(period=ch_period)
+    history = stock.history(period=periods[ch_period])
 
     
 
