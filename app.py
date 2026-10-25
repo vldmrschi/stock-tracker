@@ -66,6 +66,8 @@ def finnhub_info(symbol):
 st.title("Stock Tracker")
 st.write(format_date(date.today()))
 
+source = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True)
+
 ticker = st.text_input("Enter a ticker", "AAPL")
 ticker = ticker.strip().upper()
 
@@ -74,18 +76,21 @@ if ticker:
 
     periods = {"1 month": "1mo", "3 months": "3mo", "6 months": "6mo", "1 year": "1y", "5 years": "5y"}
     ch_period = st.selectbox("Pick a chart period", periods, index=2)
-    
     history = stock.history(period=periods[ch_period])
-
-    
 
     if history.empty:
         st.error("Ticker not found.")
     else:
-        info = stock.info
-        if not info.get("currency"):
+        used_finnhub = False
+        if source == "Finnhub":
             info = finnhub_info(ticker)
-            st.warning("Yahoo Finance isn't responding, so this data comes from Finnhub (US stocks only).")
+            used_finnhub = True
+        else:
+            info = stock.info
+            if not info.get("currency"):
+                info = finnhub_info(ticker)
+                used_finnhub = True
+                st.warning("Yahoo Finance isn't responding, so this data comes from Finnhub (US stocks only).")
         industry = info.get("industry")
         currency = info.get("currency")
         st.subheader(f"{ticker} ({info.get('longName')})")
@@ -114,7 +119,6 @@ if ticker:
         calendar = stock.calendar
         earnings_date = calendar.get("Earnings Date")
 
-
         if earnings_date:
             st.write(f"Next earnings date: {earnings_date[0]}")
         else:
@@ -135,18 +139,25 @@ if ticker:
         if total_cash is None and total_debt is None:
             total_cash = 0
             total_debt = 0
-            st.warning("Total debt and total cash aren't available, so they are treated as zero. The DCF may be less accurate.")
+            if used_finnhub:
+                st.warning("Total Cash and Debt aren't available on Finnhub, so they are treated as zero. The DCF may be less accurate.")
+            else:
+                st.warning("Total cash and Total Debt aren't available, so they are treated as zero. The DCF may be less accurate.")
         elif total_cash is None:
             total_cash = 0
-            st.warning("Total cash isn't available, so it's treated as zero. The DCF may be less accurate.")
+            st.warning("Total Cash isn't available, so it's treated as zero. The DCF may be less accurate.")
         elif total_debt is None:
             total_debt = 0
-            st.warning("Total debt isn't available, so it's treated as zero. The DCF may be less accurate.")
+            st.warning("Total Debt isn't available, so it's treated as zero. The DCF may be less accurate.")
 
         show_stat("Free Cash Flow (FCF)", fcf)
         show_stat("Shares outstanding", shares_outstanding)
-        show_stat("Total Cash", total_cash)
-        show_stat("Total Debt", total_debt)
+        if used_finnhub:
+            st.write("Total Cash: Not available on Finnhub.")
+            st.write("Total Debt: Not available on Finnhub.")
+        else:
+            show_stat("Total Cash", total_cash)
+            show_stat("Total Debt", total_debt)
 
         if industry and "Banks" in industry:
             st.info("FCF isn't meaningful for banks, so a DCF would be misleading. Banks are usually valued on P/B (price-to-book) or with a dividend discount model.")
