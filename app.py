@@ -1,4 +1,4 @@
-from altair import param
+import altair as alt
 import streamlit as st
 import yfinance as yf
 import requests
@@ -217,7 +217,7 @@ if ticker:
                     wacc_values = [wacc - 2, wacc - 1, wacc, wacc + 1, wacc + 2]
                     tg_values = [terminal_growth - 1, terminal_growth - 0.5, terminal_growth, terminal_growth + 0.5, terminal_growth + 1]
 
-                    def dcf_value(wacc_rate, terminal_rate):
+                    def dcf_value(wacc_rate, terminal_rate, growth_rate):
                         if wacc_rate <= terminal_rate:
                             return None
                         projected_fcf = fcf
@@ -242,7 +242,7 @@ if ticker:
                     for w in wacc_values:
                         row = []
                         for t in tg_values:
-                            cell = dcf_value(w / 100, t / 100)
+                            cell = dcf_value(w / 100, t / 100, growth_rate)
                             row.append(cell)
                         table.append(row)
 
@@ -258,11 +258,36 @@ if ticker:
                     centre = ([row_labels[2]], [col_labels[2]])
                     styled = sensitivity.style.format("{:.2f}", na_rep="n/a").map(cell_color).set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
                     st.dataframe(styled)
+                    growth_low = dcf_value(wacc_rate, terminal_rate, growth_rate-0.02)
+                    growth_high = dcf_value(wacc_rate, terminal_rate, growth_rate+0.02)
+                    tg_low = dcf_value(wacc_rate, terminal_rate-0.005, growth_rate)
+                    tg_high = dcf_value(wacc_rate, terminal_rate+0.005, growth_rate)
+                    wacc_low = dcf_value(wacc_rate-0.01, terminal_rate, growth_rate)
+                    wacc_high = dcf_value(wacc_rate+0.01, terminal_rate, growth_rate)
+
+                    st.subheader("Tornado Chart")
+
+                    if None in [growth_low, growth_high, wacc_low, wacc_high, tg_low, tg_high]:
+                        st.info("The Tornado Chart can't be drawn: WACC and terminal growth are too close together, so some scenarios have no valid value. Try a higher WACC or a lower terminal growth rate.")
+                    else:
+                        tornado = pd.DataFrame([[growth_low, growth_high], [wacc_high, wacc_low], [tg_low, tg_high]], index=["FCF Growth", "WACC", "Terminal Growth"], columns=["Low", "High"])
+                        tornado["Swing"] = tornado["High"] - tornado["Low"]
+                        tornado = tornado.sort_values("Swing", ascending=False)
+                        tornado = tornado.reset_index(names="Input")
+                        styled_tornado = tornado.style.format("{:.2f}", subset=["Low", "High", "Swing"])
+                        st.dataframe(styled_tornado, hide_index=True)
+                        
+                        chart = alt.Chart(tornado).mark_bar(color="#1F3864").encode(x=alt.X("Low", title=f"Value per share ({currency})", scale=alt.Scale(zero=False)), x2="High", y=alt.Y("Input", sort=None, title=None),)
+
+                        base = pd.DataFrame({"Base": [value_per_share]})
+                        line = alt.Chart(base).mark_rule(color="white").encode(x="Base")
+
+                        st.altair_chart(chart + line, use_container_width=True)
 
                 else:
                     st.info("Value per share can't be calculated. Shares outstanding is missing.")
             else:
-                st.error("Terminal growth must be lower than WACC.")
+                st.error("Terminal Growth must be lower than WACC.")
 
         elif fcf:
             st.warning("FCF is negative, so a DCF isn't meaningful for cash-burning companies. These are usually valued with revenue multiples instead.") 
