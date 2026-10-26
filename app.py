@@ -101,10 +101,13 @@ if ticker:
         def cell_color(value):
             if value is None:
                 return ""
-            if value > latest_price:
+            cell_upside = (value - latest_price) / latest_price * 100
+            if cell_upside > 10:
                 return "background-color: #1E5631; color: white"
-            else:
+            elif cell_upside < -10:
                 return "background-color: #8B1A1A; color: white"
+            else:
+                return "background-color: #4A4A4A; color: white"
 
         st.write(f"Latest price: {latest_price:.2f} {currency}")
         st.line_chart(history["Close"])
@@ -209,10 +212,12 @@ if ticker:
                     st.write(f"Value per share: {value_per_share:.2f} {currency}")
                     st.write(f"Current price: {latest_price:.2f} {currency}")
                     upside = (value_per_share - latest_price) / latest_price * 100
-                    if upside > 0:
+                    if upside > 10:
                         st.success(f"Upside: {upside:.1f}%. The stock looks undervalued.")
-                    else:
+                    elif upside < -10:
                         st.error(f"Downside: {upside:.1f}%. The stock looks overvalued.")
+                    else:
+                        st.info(f"Upside: {upside:.1f}%. The stock looks fairly valued.")
                     
                     wacc_values = [wacc - 2, wacc - 1, wacc, wacc + 1, wacc + 2]
                     tg_values = [terminal_growth - 1, terminal_growth - 0.5, terminal_growth, terminal_growth + 0.5, terminal_growth + 1]
@@ -336,10 +341,12 @@ if ticker:
                 implied_price = implied_price * 100
             st.write(f"Implied price: {implied_price:.2f} {currency}")
             comps_upside = (implied_price - latest_price) / latest_price * 100
-            if comps_upside > 0:
+            if comps_upside > 10:
                 st.success(f"Upside: {comps_upside:.1f}%. Based on peer P/E.")
-            else:
+            elif comps_upside < -10:
                 st.error(f"Downside: {comps_upside:.1f}%. Based on peer P/E.")
+            else:
+                st.info(f"Upside: {comps_upside:.1f}%. Looks fairly valued based on peer P/E.")
 
 
 
