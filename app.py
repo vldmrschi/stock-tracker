@@ -380,9 +380,9 @@ if ticker:
                 else:
                     news = sorted(news, key=lambda article: article["datetime"])
                 for article in news[:num_articles]:
-                    st.markdown(f"**{article.get('headline')}**")
+                    st.markdown(f"**{article.get('headline')}**".replace("$", "\\$"))
                     published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
                     published = f"{format_date(published)}, {published.strftime('%H:%M')}"
                     st.write(f"{article.get('source')} · {published}")
-                    st.write(article.get("summary"))
+                    st.write(article.get("summary").replace("$", "\\$"))
                     st.markdown(f"[Read more]({article.get('url')})")
