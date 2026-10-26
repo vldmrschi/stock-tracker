@@ -354,28 +354,28 @@ if ticker:
         from_date = st.date_input("News from", week_ago)
         to_date = st.date_input("News until", today)
 
-
-        params = {"symbol": ticker, "from": str(from_date), "to": str(to_date), "token": api_key}
-        response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
-        news = response.json()
-
-
+        num_articles = st.slider("Number of articles", 1, 20, 5)
 
 
         st.subheader("Latest News")
-        if "error" in news:
-            st.info("News isn't available for this ticker. News is currently only supported for companies listed in North America.")
-        elif len(news) == 0:
-            st.info(f"No news for this ticker between {format_date(from_date)} and {format_date(to_date)}")
+
+        if from_date > to_date:
+            st.error("The 'News from' date must be on or before the 'News until' date. Please adjust your dates.")
         else:
-            for article in news[:5]:
-                st.markdown(f"**{article.get('headline')}**")
-                published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
-                published = f"{format_date(published)}, {published.strftime('%H:%M')}"
-                st.write(f"{article.get('source')} · {published}")
-                st.write(article.get("summary"))
-                st.markdown(f"[Read more]({article.get('url')})")
+            params = {"symbol": ticker, "from": str(from_date), "to": str(to_date), "token": api_key}
+            response = requests.get("https://finnhub.io/api/v1/company-news", params=params)
+            news = response.json()
 
 
-
-
+            if "error" in news:
+                st.info("News isn't available for this ticker. News is currently only supported for companies listed in North America.")
+            elif len(news) == 0:
+                st.info(f"No news for this ticker between {format_date(from_date)} and {format_date(to_date)}.")
+            else:
+                for article in news[:num_articles]:
+                    st.markdown(f"**{article.get('headline')}**")
+                    published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
+                    published = f"{format_date(published)}, {published.strftime('%H:%M')}"
+                    st.write(f"{article.get('source')} · {published}")
+                    st.write(article.get("summary"))
+                    st.markdown(f"[Read more]({article.get('url')})")
