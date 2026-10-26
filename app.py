@@ -61,6 +61,9 @@ def finnhub_info(symbol):
     
     return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "sharesOutstanding": shares, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual"), "trailingEps": m.get("epsTTM")}
 
+def get_time(article):
+    return article["datetime"]
+
 
 st.title("Stock Tracker")
 st.write(format_date(date.today()))
@@ -355,7 +358,7 @@ if ticker:
         to_date = st.date_input("News until", today)
 
         num_articles = st.slider("Number of articles", 1, 20, 5)
-
+        sort_order = st.radio("Sort articles", ["Newest first", "Oldest first"], horizontal=True)
 
         st.subheader("Latest News")
 
@@ -372,6 +375,10 @@ if ticker:
             elif len(news) == 0:
                 st.info(f"No news for this ticker between {format_date(from_date)} and {format_date(to_date)}.")
             else:
+                if sort_order == "Newest first":
+                    news = sorted(news, key=lambda article: article["datetime"], reverse=True)
+                else:
+                    news = sorted(news, key=lambda article: article["datetime"])
                 for article in news[:num_articles]:
                     st.markdown(f"**{article.get('headline')}**")
                     published = datetime.fromtimestamp(article.get("datetime"), ZoneInfo("Europe/London"))
