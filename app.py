@@ -71,8 +71,6 @@ def get_fx_rate(from_cur, to_cur):
     data = requests.get("https://api.frankfurter.app/latest", params=params).json()
     return data.get("rates", {}).get(to_cur)
 
-def get_time(article):
-    return article["datetime"]
 
 
 st.title("Stock Tracker")
@@ -123,9 +121,10 @@ if ticker:
                 st.warning("The exchange rate isn't available right now, so prices are shown in the original currency.")
                 fx_rate = 1
                 shown_currency = currency
-            if currency == "GBp":
-                fx_rate = fx_rate / 100
-            shown_currency = display_currency
+            else:
+                if currency == "GBp":
+                    fx_rate = fx_rate / 100
+                shown_currency = display_currency
         st.subheader(f"{ticker} ({info.get('longName')})")
         latest_price = history["Close"].dropna().iloc[-1]
 
@@ -147,23 +146,38 @@ if ticker:
         pe = info.get("trailingPE")
         if pe:
             pe = round(pe, 2)
+        
         show_stat("P/E Ratio", pe)
-        show_stat("52-week high", info.get("fiftyTwoWeekHigh"))        
+        
+        fifty_two_week_high = info.get("fiftyTwoWeekHigh")
+        if fifty_two_week_high is None:
+            st.write("52-week high: Not Available")
+        else:
+            st.write(f"52-week high: {fifty_two_week_high * fx_rate:.2f} {shown_currency}")
+
+
         show_stat("Dividend Yield (%)", info.get("dividendYield"))
+
 
         if currency == "GBp":
             cap_currency = "GBP"
         else:
             cap_currency = currency
-        
+        cap_rate = fx_rate
+        if currency == "GBp" and shown_currency != "GBp":
+            cap_rate = fx_rate * 100
+        if shown_currency == "GBp":
+            cap_label ="GBP"
+        else:
+            cap_label = shown_currency
         if market_cap:
-            st.write(f"Market Cap: {market_cap:,} {cap_currency}")
+            st.write(f"Market Cap: {market_cap * cap_rate:,.0f} {cap_label}")
         else:
             st.write("Market Cap: Not Available")
 
+
         calendar = stock.calendar
         earnings_date = calendar.get("Earnings Date")
-
         if earnings_date:
             st.write(f"Next earnings date: {earnings_date[0]}")
         else:
@@ -195,14 +209,19 @@ if ticker:
             total_debt = 0
             st.warning("Total Debt isn't available, so it's treated as zero. The DCF may be less accurate.")
 
-        show_stat("Free Cash Flow (FCF)", fcf)
+        if fcf:
+            st.write(f"Free Cash Flow (FCF): {fcf * cap_rate:,.0f} {cap_label}")
+        else:
+            st.write("Free Cash Flow (FCF): Not Available")
+
         show_stat("Shares outstanding", shares_outstanding)
         if used_finnhub:
             st.write("Total Cash: Not available on Finnhub.")
             st.write("Total Debt: Not available on Finnhub.")
         else:
-            show_stat("Total Cash", total_cash)
-            show_stat("Total Debt", total_debt)
+            st.write(f"Total Cash: {total_cash * cap_rate:,.0f} {cap_label}")
+            st.write(f"Total Debt: {total_debt * cap_rate:,.0f} {cap_label}")
+        
 
         if industry and "Banks" in industry:
             st.info("FCF isn't meaningful for banks, so a DCF would be misleading. Banks are usually valued on P/B (price-to-book) or with a dividend discount model.")
@@ -223,25 +242,25 @@ if ticker:
                 projected_fcf = projected_fcf * (1 + growth_rate)
                 pv = projected_fcf / (1 + wacc_rate) ** year
                 total_pv = total_pv + pv
-                st.write(f"Year {year}: FCF {projected_fcf:,.0f} {cap_currency} · PV {pv:,.0f} {cap_currency}")
-            st.write(f"Sum of PVs: {total_pv:,.0f} {cap_currency}")
+                st.write(f"Year {year}: FCF {projected_fcf * cap_rate:,.0f} {cap_label} · PV {pv * cap_rate:,.0f} {cap_label}")
+            st.write(f"Sum of PVs: {total_pv * cap_rate:,.0f} {cap_label}")
 
             terminal_rate = terminal_growth / 100
             if wacc > terminal_growth:
                 terminal_value = projected_fcf * (1 + terminal_rate) / (wacc_rate - terminal_rate)
-                st.write(f"Terminal value: {terminal_value:,.0f} {cap_currency}")
+                st.write(f"Terminal value: {terminal_value * cap_rate:,.0f} {cap_label}")
                 pv_terminal = terminal_value / (1 + wacc_rate) ** 5
-                st.write(f"PV of terminal value: {pv_terminal:,.0f} {cap_currency}")
+                st.write(f"PV of terminal value: {pv_terminal * cap_rate:,.0f} {cap_label}")
                 enterprise_value = total_pv + pv_terminal
-                st.write(f"Enterprise value: {enterprise_value:,.0f} {cap_currency}")
+                st.write(f"Enterprise value: {enterprise_value * cap_rate:,.0f} {cap_label}")
                 equity_value = enterprise_value + total_cash - total_debt
-                st.write(f"Equity Value: {equity_value:,.0f} {cap_currency}")
+                st.write(f"Equity Value: {equity_value * cap_rate:,.0f} {cap_label}")
                 if shares_outstanding:
                     value_per_share = equity_value / shares_outstanding
                     if currency == "GBp":
                         value_per_share = value_per_share * 100
-                    st.write(f"Value per share: {value_per_share:.2f} {currency}")
-                    st.write(f"Current price: {latest_price:.2f} {currency}")
+                    st.write(f"Value per share: {value_per_share * fx_rate:.2f} {shown_currency}")
+                    st.write(f"Current price: {latest_price * fx_rate:.2f} {shown_currency}")
                     upside = (value_per_share - latest_price) / latest_price * 100
                     if upside > 10:
                         st.success(f"Upside: {upside:.1f}%. The stock looks undervalued.")
@@ -252,6 +271,7 @@ if ticker:
                     
                     wacc_values = [wacc - 2, wacc - 1, wacc, wacc + 1, wacc + 2]
                     tg_values = [terminal_growth - 1, terminal_growth - 0.5, terminal_growth, terminal_growth + 0.5, terminal_growth + 1]
+
 
                     def dcf_value(wacc_rate, terminal_rate, growth_rate):
                         if wacc_rate <= terminal_rate:
@@ -292,7 +312,7 @@ if ticker:
 
                     sensitivity = pd.DataFrame(table, index=row_labels, columns=col_labels)
                     centre = ([row_labels[2]], [col_labels[2]])
-                    styled = sensitivity.style.format("{:.2f}", na_rep="n/a").map(cell_color).set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
+                    styled = sensitivity.style.format(lambda v: f"{v * fx_rate:.2f}", na_rep="n/a").map(cell_color).set_properties(subset=centre, **{"background-color": "#1F3864", "color": "white"})
                     st.dataframe(styled)
                     growth_low = dcf_value(wacc_rate, terminal_rate, growth_rate-0.02)
                     growth_high = dcf_value(wacc_rate, terminal_rate, growth_rate+0.02)
@@ -307,15 +327,17 @@ if ticker:
                         st.info("The Tornado Chart can't be drawn: WACC and terminal growth are too close together, so some scenarios have no valid value. Try a higher WACC or a lower terminal growth rate.")
                     else:
                         tornado = pd.DataFrame([[growth_low, growth_high], [wacc_high, wacc_low], [tg_low, tg_high]], index=["FCF Growth", "WACC", "Terminal Growth"], columns=["Low", "High"])
+                        tornado["Low"] = tornado["Low"] * fx_rate
+                        tornado["High"] = tornado["High"] * fx_rate
                         tornado["Swing"] = tornado["High"] - tornado["Low"]
                         tornado = tornado.sort_values("Swing", ascending=False)
                         tornado = tornado.reset_index(names="Input")
                         styled_tornado = tornado.style.format("{:.2f}", subset=["Low", "High", "Swing"])
                         st.dataframe(styled_tornado, hide_index=True)
                         
-                        chart = alt.Chart(tornado).mark_bar(color="#1F3864").encode(x=alt.X("Low", title=f"Value per share ({currency})", scale=alt.Scale(zero=False)), x2="High", y=alt.Y("Input", sort=None, title=None),)
+                        chart = alt.Chart(tornado).mark_bar(color="#1F3864").encode(x=alt.X("Low", title=f"Value per share ({shown_currency})", scale=alt.Scale(zero=False)), x2="High", y=alt.Y("Input", sort=None, title=None),)
 
-                        base = pd.DataFrame({"Base": [value_per_share]})
+                        base = pd.DataFrame({"Base": [value_per_share * fx_rate]})
                         line = alt.Chart(base).mark_rule(color="white").encode(x="Base")
 
                         st.altair_chart(chart + line, use_container_width=True)
@@ -330,7 +352,6 @@ if ticker:
 
         else:
             st.info("DCF isn't available for this ticker. Funds and ETFs don't have Free Cash Flow (FCF)")
-
 
 
 
@@ -370,7 +391,7 @@ if ticker:
             implied_price = median_pe * eps
             if currency == "GBp":
                 implied_price = implied_price * 100
-            st.write(f"Implied price: {implied_price:.2f} {currency}")
+            st.write(f"Implied price: {implied_price * fx_rate:.2f} {shown_currency}")
             comps_upside = (implied_price - latest_price) / latest_price * 100
             if comps_upside > 10:
                 st.success(f"Upside: {comps_upside:.1f}%. Based on peer P/E.")
