@@ -71,6 +71,15 @@ def get_fx_rate(from_cur, to_cur):
     data = requests.get("https://api.frankfurter.app/latest", params=params).json()
     return data.get("rates", {}).get(to_cur)
 
+@st.cache_resource
+def yahoo_status():
+    return {"was_down": False}
+
+
+
+
+
+
 
 
 st.title("Stock Tracker")
@@ -97,6 +106,7 @@ if ticker:
         st.error("Ticker not found.")
     else:
         used_finnhub = False
+        status = yahoo_status()
         if source == "Finnhub":
             info = finnhub_info(ticker)
             used_finnhub = True
@@ -106,6 +116,11 @@ if ticker:
                 info = finnhub_info(ticker)
                 used_finnhub = True
                 st.warning("Yahoo Finance isn't responding, so this data comes from Finnhub (US stocks only).")
+                status["was_down"] = True
+            elif status["was_down"]:
+                st.success("Yahoo Finance is back online, so data is from Yahoo again.")
+                status["was_down"] = False
+
         industry = info.get("industry")
         currency = info.get("currency")
         if display_currency == "Original":
