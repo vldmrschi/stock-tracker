@@ -61,6 +61,16 @@ def finnhub_info(symbol):
     
     return {"longName": profile.get("name"), "currency": profile.get("currency"), "marketCap": market_cap, "sharesOutstanding": shares, "trailingPE": m.get("peTTM"), "fiftyTwoWeekHigh": m.get("52WeekHigh"), "dividendYield": m.get("dividendYieldIndicatedAnnual"), "trailingEps": m.get("epsTTM")}
 
+def get_fx_rate(from_cur, to_cur):
+    if from_cur == to_cur:
+        return 1
+    fx = yf.Ticker(f"{from_cur}{to_cur}=X").history(period="5d")
+    if not fx.empty:
+        return fx["Close"].dropna().iloc[-1]
+    params = {"from": from_cur, "to": to_cur}
+    data = requests.get("https://api.frankfurter.app/latest", params=params).json()
+    return data.get("rates", {}).get(to_cur)
+
 def get_time(article):
     return article["datetime"]
 
@@ -69,6 +79,10 @@ st.title("Stock Tracker")
 st.write(format_date(date.today()))
 
 source = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True)
+
+currencies = ["Original", "USD", "GBP", "EUR"]
+display_currency = st.selectbox("Display currency", currencies)
+
 
 ticker = st.text_input("Enter a ticker", "AAPL")
 ticker = ticker.strip().upper()
@@ -79,6 +93,7 @@ if ticker:
     periods = {"1 month": "1mo", "3 months": "3mo", "6 months": "6mo", "1 year": "1y", "5 years": "5y"}
     ch_period = st.selectbox("Pick a chart period", periods, index=2)
     history = stock.history(period=periods[ch_period])
+
 
     if history.empty:
         st.error("Ticker not found.")
@@ -95,6 +110,22 @@ if ticker:
                 st.warning("Yahoo Finance isn't responding, so this data comes from Finnhub (US stocks only).")
         industry = info.get("industry")
         currency = info.get("currency")
+        if display_currency == "Original":
+            fx_rate = 1
+            shown_currency = currency
+        else:
+            if currency == "GBp":
+                base = "GBP"
+            else:
+                base = currency
+            fx_rate = get_fx_rate(base, display_currency)
+            if fx_rate is None:
+                st.warning("The exchange rate isn't available right now, so prices are shown in the original currency.")
+                fx_rate = 1
+                shown_currency = currency
+            if currency == "GBp":
+                fx_rate = fx_rate / 100
+            shown_currency = display_currency
         st.subheader(f"{ticker} ({info.get('longName')})")
         latest_price = history["Close"].dropna().iloc[-1]
 
@@ -109,8 +140,8 @@ if ticker:
             else:
                 return "background-color: #4A4A4A; color: white"
 
-        st.write(f"Latest price: {latest_price:.2f} {currency}")
-        st.line_chart(history["Close"])
+        st.write(f"Latest price: {latest_price * fx_rate:.2f} {shown_currency}")
+        st.line_chart(history["Close"] * fx_rate)
         st.write("Company Info:")
         market_cap = info.get("marketCap")
         pe = info.get("trailingPE")
