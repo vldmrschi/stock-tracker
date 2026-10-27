@@ -79,9 +79,6 @@ def yahoo_status():
 
 
 
-
-
-
 st.title("Stock Tracker")
 st.write(format_date(date.today()))
 
@@ -190,6 +187,13 @@ if ticker:
         else:
             st.write("Market Cap: Not Available")
 
+        fin_currency = info.get("financialCurrency") or cap_currency
+        fin_rate = get_fx_rate(fin_currency, cap_currency)
+        if fin_rate is None:
+            st.warining("The company's accounts couldn't be converted into its share currency, so the DCF may be inaccurate.")
+            fin_rate = 1
+        
+
 
         calendar = stock.calendar
         earnings_date = calendar.get("Earnings Date")
@@ -223,6 +227,11 @@ if ticker:
         elif total_debt is None:
             total_debt = 0
             st.warning("Total Debt isn't available, so it's treated as zero. The DCF may be less accurate.")
+
+        if fcf:
+            fcf = fcf * fin_rate
+        total_cash = total_cash * fin_rate 
+        total_debt = total_debt * fin_rate
 
         if fcf:
             st.write(f"Free Cash Flow (FCF): {fcf * cap_rate:,.0f} {cap_label}")
@@ -397,12 +406,12 @@ if ticker:
 
         median_pe = median_row[0]
         eps = info.get("trailingEps")
-
         if eps is None:
             st.info("There is no EPS data, the calculation cannot happen.")
         elif eps <= 0:
             st.info("This is a loss-making company, so a P/E-based value isn't meaningful.")
         else:
+            eps = eps * fin_rate
             implied_price = median_pe * eps
             if currency == "GBp":
                 implied_price = implied_price * 100
