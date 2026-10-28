@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
-
+from streamlit_searchbox import st_searchbox
 
 api_key = st.secrets.get("FINNHUB_API_KEY")
 
@@ -75,11 +75,39 @@ def get_fx_rate(from_cur, to_cur):
 def yahoo_status():
     return {"was_down": False}
 
+exchange_countries = {"NASDAQ": "United States", "NYSE": "United States", "NYSEArca": "United States", "NYSE MKT": "United States", "London": "United Kingdom", "XETRA": "Germany", "Frankfurt": "Germany", "Stuttgart": "Germany", "Paris": "France", "Madrid Stock Exchange CATS": "Spain", "Milan": "Italy", "Amsterdam": "Netherlands", "Toronto": "Canada", "NEO": "Canada", "Stockholm": "Sweden", "São Paulo": "Brazil", "BVB": "Romania"}
 
+def search_stocks(text):
+    if len(text) < 2:
+        return []
+    quotes = yf.Search(text, max_results=10).quotes
+    results = []
+    for q in quotes:
+        if q.get("typeDisp") not in ["Equity", "ETF"]:
+            continue
+        if q.get("exchDisp") in ["OTC Markets", "International Orderbook - London"]:
+            continue
+        symbol = q.get("symbol")
+        name = q.get("longname") or q.get("shortname")
+        exchange = q.get("exchDisp")
+        country = exchange_countries.get(exchange)
+
+        if country == "United States":
+            ticker_text = f"${symbol}"
+        else:
+            ticker_text = symbol
+
+        if country:
+            label = f"{name} · {ticker_text} · {exchange} · {country}"
+        else:
+            label = f"{name} · {ticker_text} · {exchange}"
+        results.append((label, symbol))
+    return results
 
 
 
 st.title("Stock Tracker")
+
 st.write(format_date(date.today()))
 
 source = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True)
@@ -87,9 +115,11 @@ source = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True
 currencies = ["Original", "USD", "GBP", "EUR"]
 display_currency = st.selectbox("Display currency", currencies)
 
+picked = st_searchbox(search_stocks, placeholder="Search a company or ticker...", key="stock_search")
+ticker = picked or "AAPL"
 
-ticker = st.text_input("Enter a ticker", "AAPL")
-ticker = ticker.strip().upper()
+if not picked:
+    st.caption("Showing AAPL (Apple Inc.) by default. Search any company to switch.")
 
 if ticker:
     stock = yf.Ticker(ticker)
