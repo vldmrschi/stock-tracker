@@ -9,7 +9,6 @@ from streamlit_searchbox import st_searchbox
 
 api_key = st.secrets.get("FINNHUB_API_KEY")
 
-
 def show_stat(label,value):
     if value:
         st.write(f"{label}: {value:,}")
@@ -75,13 +74,31 @@ def get_fx_rate(from_cur, to_cur):
 def yahoo_status():
     return {"was_down": False}
 
+
+def finnhub_searches(text):
+    params = {"q": text, "token": api_key}
+    data = requests.get("https://finnhub.io/api/v1/search", params=params).json()
+    results = []
+    for r in data.get("result", [])[:7]:
+        if r.get("type") not in ["Common Stock", "ETP"]:
+            continue
+        symbol = r.get("symbol")
+        name = r.get("description")
+        label = f"{name} · {symbol} · via Finnhub"
+        results.append((label, symbol))
+    return results
+
 exchange_countries = {"NASDAQ": "United States", "NYSE": "United States", "NYSEArca": "United States", "NYSE MKT": "United States", "London": "United Kingdom", "XETRA": "Germany", "Frankfurt": "Germany", "Stuttgart": "Germany", "Paris": "France", "Madrid Stock Exchange CATS": "Spain", "Milan": "Italy", "Amsterdam": "Netherlands", "Toronto": "Canada", "NEO": "Canada", "Stockholm": "Sweden", "São Paulo": "Brazil", "BVB": "Romania"}
 
 def search_stocks(text):
     if len(text) < 2:
         return []
-    quotes = yf.Search(text, max_results=10).quotes
+    try:
+        quotes = yf.Search(text, max_results=10).quotes
+    except Exception:
+        return finnhub_searches(text)
     results = []
+
     for q in quotes:
         if q.get("typeDisp") not in ["Equity", "ETF"]:
             continue
@@ -102,6 +119,8 @@ def search_stocks(text):
         else:
             label = f"{name} · {ticker_text} · {exchange}"
         results.append((label, symbol))
+    if not results:
+        return finnhub_searches(text)
     return results
 
 
