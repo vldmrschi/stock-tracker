@@ -484,7 +484,7 @@ if ticker:
             earnings = None
 
         if earnings is None:
-            st.info("Earnings data isn't available for this ticker at the moment (Funds and ETFs don't report earnings.)")
+            st.info("Earnings data isn't available for this ticker right now. Funds and ETFs don't report earnings, and for companies the data source may be temporarily unavailable.")
         else:
             past_earnings = earnings.dropna().head(4)
             latest_date = past_earnings.index.date[0]
