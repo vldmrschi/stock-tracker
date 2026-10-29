@@ -74,18 +74,6 @@ def yahoo_status():
     return {"was_down": False}
 
 
-def finnhub_searches(text):
-    params = {"q": text, "token": api_key}
-    data = requests.get("https://finnhub.io/api/v1/search", params=params).json()
-    results = []
-    for r in data.get("result", [])[:7]:
-        if r.get("type") not in ["Common Stock", "ETP"]:
-            continue
-        symbol = r.get("symbol")
-        name = r.get("description")
-        label = f"{name} · {symbol} · via Finnhub"
-        results.append((label, symbol))
-    return results
 
 
 
@@ -101,11 +89,11 @@ source = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True
 
 display_currency = st.session_state.get("currency", "Original")
 
-picked = st.session_state.get("ticker")
-ticker = picked or "AAPL"
+ticker = st.session_state.get("ticker")
 
-if not picked:
-    st.caption("Showing AAPL (Apple Inc.) by default. Search any company to switch.")
+if not ticker:
+    st.info("Search a company in the sidebar to get started.")
+    st.stop()
 
 if ticker:
     stock = yf.Ticker(ticker)
