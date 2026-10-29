@@ -7,7 +7,6 @@ from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 from shared import finnhub_multiples, get_multiples, finnhub_info, get_fx_rate, yahoo_status
 
-
 api_key = st.secrets.get("FINNHUB_API_KEY")
 
 def show_stat(label,value):
@@ -43,7 +42,7 @@ st.title("Stock Tracker")
 
 st.write(format_date(date.today()))
 
-source = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True)
+source = st.session_state.get("source", "Yahoo Finance")
 
 display_currency = st.session_state.get("currency", "Original")
 
@@ -152,7 +151,7 @@ if ticker:
         fin_currency = info.get("financialCurrency") or cap_currency
         fin_rate = get_fx_rate(fin_currency, cap_currency)
         if fin_rate is None:
-            st.warining("The company's accounts couldn't be converted into its share currency, so the DCF may be inaccurate.")
+            st.warning("The company's accounts couldn't be converted into its share currency, so the DCF may be inaccurate.")
             fin_rate = 1
         
 

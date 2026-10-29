@@ -72,5 +72,6 @@ with st.sidebar:
             st.session_state["ticker"] = picked
 
     st.session_state["currency"] = st.selectbox("Display currency", currencies)
+    st.session_state["source"] = st.radio("Pick a source", ["Yahoo Finance", "Finnhub"], horizontal=True)
 
 nav.run()
