@@ -65,6 +65,12 @@ banks = st.Page("views/banks.py", title="Banks")
 
 nav = st.navigation([home, ticker, valuation, banks])
 
+st.sidebar.title("Valtide")
+st.sidebar.markdown("<span style='font-size: 0.85rem; font-style: italic; color: #8FA39A'>Understand the value beneath the price.</span>", unsafe_allow_html=True)
+st.sidebar.write("")
+
+
+
 with st.sidebar:
     if nav.title != "Home":
         picked = st_searchbox(search_stocks, placeholder="Search a company or ticker...", key="stock_search")
