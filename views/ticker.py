@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import pandas as pd
+import altair as alt
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 from shared import load_company, show_stat
@@ -21,10 +23,6 @@ def day_suffix(day):
     
 def format_date(d):
     return f"{d.day}{day_suffix(d.day)} {d.strftime('%B %Y')}"
-
-
-
-
 
 
 
@@ -67,6 +65,12 @@ st.subheader(f"{ticker} ({info.get('longName')})")
 
 st.write(f"Latest price: {latest_price * fx_rate:.2f} {shown_currency}")
 st.line_chart(history["Close"] * fx_rate)
+
+chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
+price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False)))
+st.altair_chart(price_chart, use_container_width=True)
+
+
 st.write("Company Info:")
 market_cap = info.get("marketCap")
 pe = info.get("trailingPE")
