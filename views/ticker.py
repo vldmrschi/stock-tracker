@@ -66,9 +66,17 @@ st.subheader(f"{ticker} ({info.get('longName')})")
 st.write(f"Latest price: {latest_price * fx_rate:.2f} {shown_currency}")
 st.line_chart(history["Close"] * fx_rate)
 
-chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
-price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False)))
-st.altair_chart(price_chart, use_container_width=True)
+
+chart_style = st.radio("Pick a chart style", ["Line", "Candlestick"], horizontal=True)
+if chart_style == "Line":
+    chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
+    price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False)))
+    st.altair_chart(price_chart, use_container_width=True)
+else:
+    candle_data = pd.DataFrame({"Date": history.index, "Open": history["Open"] * fx_rate, "High": history["High"] * fx_rate, "Low": history["Low"] * fx_rate, "Close": history["Close"] * fx_rate})
+    wicks = alt.Chart(candle_data).mark_rule(color="#8FA39A").encode(x="Date", y=alt.Y("Low", scale=alt.Scale(zero=False)), y2="High")
+    st.altair_chart(wicks, use_container_width=True)
+
 
 
 st.write("Company Info:")
