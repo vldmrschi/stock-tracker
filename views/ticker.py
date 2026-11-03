@@ -74,8 +74,9 @@ if chart_style == "Line":
     st.altair_chart(price_chart, use_container_width=True)
 else:
     candle_data = pd.DataFrame({"Date": history.index, "Open": history["Open"] * fx_rate, "High": history["High"] * fx_rate, "Low": history["Low"] * fx_rate, "Close": history["Close"] * fx_rate})
-    wicks = alt.Chart(candle_data).mark_rule(color="#8FA39A").encode(x="Date", y=alt.Y("Low", scale=alt.Scale(zero=False)), y2="High")
-    st.altair_chart(wicks, use_container_width=True)
+    wicks = alt.Chart(candle_data).mark_rule(color="#8FA39A").encode(x="Date", y=alt.Y("Low", scale=alt.Scale(zero=False), title="Price"), y2="High")
+    bodies = alt.Chart(candle_data).mark_bar().encode(x="Date", y="Open", y2="Close", color=alt.condition("datum.Open <= datum.Close", alt.value("#4ADE80"), alt.value("#E06C75")))
+    st.altair_chart(wicks + bodies, use_container_width=True)
 
 
 
