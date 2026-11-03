@@ -67,7 +67,10 @@ st.write(f"Latest price: {latest_price * fx_rate:.2f} {shown_currency}")
 st.line_chart(history["Close"] * fx_rate)
 
 
+
 chart_style = st.radio("Pick a chart style", ["Line", "Candlestick"], horizontal=True)
+show_ma = st.checkbox("Show 20-day moving average")
+
 if chart_style == "Line":
     chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
     price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False)))
@@ -77,6 +80,12 @@ else:
     wicks = alt.Chart(candle_data).mark_rule(color="#8FA39A").encode(x="Date", y=alt.Y("Low", scale=alt.Scale(zero=False), title="Price"), y2="High")
     bodies = alt.Chart(candle_data).mark_bar().encode(x="Date", y="Open", y2="Close", color=alt.condition("datum.Open <= datum.Close", alt.value("#4ADE80"), alt.value("#E06C75")))
     price_view = wicks + bodies
+
+if show_ma:
+    ma_data = pd.DataFrame({"Date": history.index, "MA20": history["Close"].rolling(20).mean() * fx_rate})
+    ma_chart = alt.Chart(ma_data).mark_line(color="#8A9BA8").encode(x="Date", y=alt.Y("MA20", scale=alt.Scale(zero=False), title="Price"))
+    price_view = price_view + ma_chart
+
 st.subheader(chart_style, divider="gray")
 st.altair_chart(price_view, use_container_width=True)
 
