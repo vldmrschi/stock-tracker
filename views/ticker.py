@@ -69,8 +69,10 @@ st.line_chart(history["Close"] * fx_rate)
 
 
 chart_style = st.radio("Pick a chart style", ["Line", "Candlestick"], horizontal=True)
-show_ma = st.checkbox("Show 20-day moving average")
-
+ma_choices = st.multiselect("Pick a moving average", ["20-day", "50-day", "200-day"])
+ma_days = {"20-day": 20, "50-day": 50, "200-day": 200}
+ma_colours = {"20-day": "#8A9BA8", "50-day": "#E6EFE9","200-day": "#E5C07B"}
+              
 if chart_style == "Line":
     chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
     price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False)))
@@ -81,13 +83,16 @@ else:
     bodies = alt.Chart(candle_data).mark_bar().encode(x="Date", y="Open", y2="Close", color=alt.condition("datum.Open <= datum.Close", alt.value("#4ADE80"), alt.value("#E06C75")))
     price_view = wicks + bodies
 
-if show_ma:
-    ma_data = pd.DataFrame({"Date": history.index, "MA20": history["Close"].rolling(20).mean() * fx_rate})
-    ma_chart = alt.Chart(ma_data).mark_line(color="#8A9BA8").encode(x="Date", y=alt.Y("MA20", scale=alt.Scale(zero=False), title="Price"))
+for choice in ma_choices:
+    if choice == "200-day" and ch_period in ["1 month", "3 months", "6 months"]:
+        st.info("The 200-day moving average needs about 10 months of data, so it only shows on the 1-year and 5-year charts.")
+    ma_data = pd.DataFrame({"Date": history.index, "MA": history["Close"].rolling(ma_days[choice]).mean() * fx_rate, "Line": choice})
+    ma_chart = alt.Chart(ma_data).mark_line(color=ma_colours[choice]).encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title="Price"), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")],)
     price_view = price_view + ma_chart
 
 st.subheader(chart_style, divider="gray")
 st.altair_chart(price_view, use_container_width=True)
+
 
 volume_data = pd.DataFrame({"Date": history.index, "Volume": history["Volume"]})
 volume_chart = alt.Chart(volume_data).mark_bar(color="#8FA39A").encode(x="Date", y=alt.Y("Volume", axis=alt.Axis(format="~s"))).properties(height=100)
