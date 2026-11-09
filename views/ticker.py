@@ -69,13 +69,18 @@ st.line_chart(history["Close"] * fx_rate)
 
 
 chart_style = st.radio("Pick a chart style", ["Line", "Candlestick"], horizontal=True)
+pct_mode = st.toggle("Show as % change")
 ma_choices = st.multiselect("Pick a moving average", ["20-day", "50-day", "200-day"])
 ma_days = {"20-day": 20, "50-day": 50, "200-day": 200}
 ma_colours = {"20-day": "#8A9BA8", "50-day": "#E6EFE9","200-day": "#E5C07B"}
               
 if chart_style == "Line":
-    chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
-    price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False)))
+    if pct_mode:
+        chart_data = pd.DataFrame({"Date": history.index, "Price": (history["Close"] / history["Close"].iloc[0] - 1) * 100})
+    else:
+        chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
+    y_title = "% change" if pct_mode else "Price"
+    price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", title=y_title, scale=alt.Scale(zero=False)))
     price_view = price_chart
 else:
     candle_data = pd.DataFrame({"Date": history.index, "Open": history["Open"] * fx_rate, "High": history["High"] * fx_rate, "Low": history["Low"] * fx_rate, "Close": history["Close"] * fx_rate})
