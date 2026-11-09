@@ -83,11 +83,15 @@ else:
     bodies = alt.Chart(candle_data).mark_bar().encode(x="Date", y="Open", y2="Close", color=alt.condition("datum.Open <= datum.Close", alt.value("#4ADE80"), alt.value("#E06C75")))
     price_view = wicks + bodies
 
+ma_range = []
+for choice in ma_choices:
+    ma_range.append(ma_colours[choice])
+
 for choice in ma_choices:
     if choice == "200-day" and ch_period in ["1 month", "3 months", "6 months"]:
         st.info("The 200-day moving average needs about 10 months of data, so it only shows on the 1-year and 5-year charts.")
     ma_data = pd.DataFrame({"Date": history.index, "MA": history["Close"].rolling(ma_days[choice]).mean() * fx_rate, "Line": choice})
-    ma_chart = alt.Chart(ma_data).mark_line(color=ma_colours[choice]).encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title="Price"), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")],)
+    ma_chart = alt.Chart(ma_data).mark_line().encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title="Price"), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")], color = alt.Color("Line", scale=alt.Scale(domain=ma_choices, range=ma_range), legend=alt.Legend(orient="right", title=None)))
     price_view = price_view + ma_chart
 
 st.subheader(chart_style, divider="gray")
