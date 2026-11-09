@@ -87,10 +87,10 @@ ma_range = []
 for choice in ma_choices:
     ma_range.append(ma_colours[choice])
 
+long_history = stock.history(period="10y")
 for choice in ma_choices:
-    if choice == "200-day" and ch_period in ["1 month", "3 months", "6 months"]:
-        st.info("The 200-day moving average needs about 10 months of data, so it only shows on the 1-year and 5-year charts.")
-    ma_data = pd.DataFrame({"Date": history.index, "MA": history["Close"].rolling(ma_days[choice]).mean() * fx_rate, "Line": choice})
+    ma_data = pd.DataFrame({"Date": long_history.index, "MA": long_history["Close"].rolling(ma_days[choice]).mean() * fx_rate, "Line": choice})
+    ma_data = ma_data[ma_data["Date"] >= history.index[0]]
     ma_chart = alt.Chart(ma_data).mark_line().encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title="Price"), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")], color = alt.Color("Line", scale=alt.Scale(domain=ma_choices, range=ma_range), legend=alt.Legend(orient="right", title=None)))
     price_view = price_view + ma_chart
 
