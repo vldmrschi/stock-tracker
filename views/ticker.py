@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import altair as alt
+import yfinance as yf
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 from shared import load_company, show_stat
@@ -90,9 +91,24 @@ else:
     bodies = alt.Chart(candle_data).mark_bar().encode(x="Date", y="Open", y2="Close", color=alt.condition("datum.Open <= datum.Close", alt.value("#4ADE80"), alt.value("#E06C75")))
     price_view = wicks + bodies
 
+
 ma_range = []
 for choice in ma_choices:
     ma_range.append(ma_colours[choice])
+
+compare_text = st.text_input("Compare with (up to 4 tickers, comma-separated)")
+compare_tickers = []
+for piece in compare_text.split(","):
+    piece = piece.strip().upper()
+    if piece == "":
+        continue
+    compare_tickers.append(piece)
+compare_tickers = compare_tickers[:4]
+
+compare_colours = ["#61AFEF", "#C678DD", "#FF79C6", "#9CDCFE"]
+compare_range = compare_colours[:len(compare_tickers)]
+legend_names = ma_choices + compare_tickers
+legend_colours = ma_range + compare_range
 
 long_history = stock.history(period="10y")
 for choice in ma_choices:
@@ -101,8 +117,21 @@ for choice in ma_choices:
     if pct_mode and chart_style == "Line":
         ma_data["MA"] = (ma_data["MA"] / first_price - 1) * 100
     ma_title = y_title if chart_style == "Line" else "Price"
-    ma_chart = alt.Chart(ma_data).mark_line().encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title=ma_title), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")], color=alt.Color("Line", scale=alt.Scale(domain=ma_choices, range=ma_range), legend=alt.Legend(orient="right", title=None)))
+    ma_chart = alt.Chart(ma_data).mark_line().encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title=ma_title), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")], color=alt.Color("Line", scale=alt.Scale(domain=legend_names, range=legend_colours), legend=alt.Legend(orient="right", title=None)))
     price_view = price_view + ma_chart
+
+if pct_mode and chart_style == "Line":
+    for t in compare_tickers:
+        t_history = yf.Ticker(t).history(period=periods[ch_period])
+        if t_history.empty:
+            st.warning(f"Couldn't find {t}.")
+            continue
+        t_data = pd.DataFrame({"Date": t_history.index, "Price": (t_history["Close"] / t_history["Close"].iloc[0] - 1) * 100, "Line": t})
+        t_chart = alt.Chart(t_data).mark_line().encode(x="Date", y=alt.Y("Price", scale=alt.Scale(zero=False), title=y_title), tooltip=["Line", "Date", alt.Tooltip("Price", format=".2f")], color=alt.Color("Line", scale=alt.Scale(domain=legend_names, range=legend_colours), legend=alt.Legend(orient="right", title=None)))
+        price_view = price_view + t_chart
+elif compare_tickers:
+    st.caption("Turn on % change on the Line chart to compare tickers.")
+
 
 st.subheader(chart_style, divider="gray")
 st.altair_chart(price_view, use_container_width=True)
