@@ -69,17 +69,19 @@ st.line_chart(history["Close"] * fx_rate)
 
 
 chart_style = st.radio("Pick a chart style", ["Line", "Candlestick"], horizontal=True)
-pct_mode = st.toggle("Show as % change")
+pct_mode = st.toggle("Show as % change", disabled=chart_style == "Candlestick", help="% change mode works with the Line chart.",)
 ma_choices = st.multiselect("Pick a moving average", ["20-day", "50-day", "200-day"])
 ma_days = {"20-day": 20, "50-day": 50, "200-day": 200}
-ma_colours = {"20-day": "#8A9BA8", "50-day": "#E6EFE9","200-day": "#E5C07B"}
-              
+ma_colours = {"20-day": "#8A9BA8", "50-day": "#E6EFE9", "200-day": "#E5C07B"}
+
+y_title = "% change" if pct_mode else "Price"
+first_price = history["Close"].iloc[0] * fx_rate
+
 if chart_style == "Line":
     if pct_mode:
         chart_data = pd.DataFrame({"Date": history.index, "Price": (history["Close"] / history["Close"].iloc[0] - 1) * 100})
     else:
         chart_data = pd.DataFrame({"Date": history.index, "Price": history["Close"] * fx_rate})
-    y_title = "% change" if pct_mode else "Price"
     price_chart = alt.Chart(chart_data).mark_line(color="#20C9B0").encode(x="Date", y=alt.Y("Price", title=y_title, scale=alt.Scale(zero=False)))
     price_view = price_chart
 else:
@@ -96,7 +98,10 @@ long_history = stock.history(period="10y")
 for choice in ma_choices:
     ma_data = pd.DataFrame({"Date": long_history.index, "MA": long_history["Close"].rolling(ma_days[choice]).mean() * fx_rate, "Line": choice})
     ma_data = ma_data[ma_data["Date"] >= history.index[0]]
-    ma_chart = alt.Chart(ma_data).mark_line().encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title="Price"), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")], color = alt.Color("Line", scale=alt.Scale(domain=ma_choices, range=ma_range), legend=alt.Legend(orient="right", title=None)))
+    if pct_mode and chart_style == "Line":
+        ma_data["MA"] = (ma_data["MA"] / first_price - 1) * 100
+    ma_title = y_title if chart_style == "Line" else "Price"
+    ma_chart = alt.Chart(ma_data).mark_line().encode(x="Date", y=alt.Y("MA", scale=alt.Scale(zero=False), title=ma_title), tooltip=["Line", "Date", alt.Tooltip("MA", format=".2f")], color=alt.Color("Line", scale=alt.Scale(domain=ma_choices, range=ma_range), legend=alt.Legend(orient="right", title=None)))
     price_view = price_view + ma_chart
 
 st.subheader(chart_style, divider="gray")
